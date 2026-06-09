@@ -1,0 +1,15 @@
+{
+  "name": "a2a-supply-chain-negotiations",
+  "private": true,
+  "workspaces": [
+    "web"
+  ],
+  "scripts": {
+    "setup:all": "./scripts/setup-all.sh",
+    "dev": "./scripts/run-all.sh",
+    "dev:web": "npm run dev --workspace web",
+    "build:web": "npm run build --workspace web",
+    "start:web": "npm run start --workspace web",
+    "test": "PYTHONPATH=. .venv/bin/pytest"
+  }
+}
