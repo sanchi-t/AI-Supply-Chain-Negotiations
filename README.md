@@ -8,9 +8,12 @@ This monorepo scaffolds a multi-step negotiation simulator where AI agents repre
 
 ## 🖥️ Dashboard Preview
 
-Below is a preview of the **Orange Treaty** simulation dashboard, showcasing the supply chain flow, real-time negotiation metrics, and market volatility gauges:
+Below are previews of the **Orange Treaty** simulation dashboard:
 
-![Orange Treaty Dashboard UI](docs/orange_treaty_ui.png)
+![Dashboard Overview](docs/A2A(1).png)
+![Simulation Analytics](docs/A2A(2).png)
+![Negotiation Interface](docs/A2A(3).png)
+![Simulation Run Log](docs/A2A(4).jpeg)
 
 ---
 

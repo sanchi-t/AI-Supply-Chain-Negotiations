@@ -170,10 +170,21 @@ class LangfuseTraceWrapper:
         if usage_details is not None:
             kwargs["usage_details"] = usage_details
 
+        observation_entered = False
         try:
-            with client.start_as_current_observation(**kwargs) as observation:
+            cm = client.start_as_current_observation(**kwargs)
+            observation = cm.__enter__()
+            observation_entered = True
+            try:
                 yield observation
+            except BaseException as body_exc:
+                if not cm.__exit__(type(body_exc), body_exc, body_exc.__traceback__):
+                    raise
+            else:
+                cm.__exit__(None, None, None)
         except Exception as exc:
+            if observation_entered:
+                raise
             self._init_error = f"Langfuse tracing failed: {exc}"
             yield _NoopObservation()
 

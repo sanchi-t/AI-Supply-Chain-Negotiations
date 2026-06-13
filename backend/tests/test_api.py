@@ -27,6 +27,7 @@ from backend.app.services.run_repository import get_run_record, save_run_record
 
 def _configure_storage(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "")
+    monkeypatch.setenv("AI_PROVIDER", "openai")  # use openai so empty key triggers 503 in tests
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "")
     monkeypatch.setenv("A2A_RUNS_DIR", str(tmp_path / "runs"))
@@ -73,8 +74,8 @@ def test_custom_simulation_run_launches_one_configured_run(monkeypatch, tmp_path
             return None
 
     monkeypatch.setattr(
-        "backend.app.services.simulation_service.OpenAIClientWrapper",
-        FakeStatusClient,
+        "backend.app.services.simulation_service.get_ai_client",
+        lambda _settings: FakeStatusClient(),
     )
     monkeypatch.setattr("backend.app.services.simulation_service.Thread", FakeThread)
     client = TestClient(app)
@@ -232,8 +233,8 @@ def test_branch_endpoint_copies_history_through_pivot(monkeypatch, tmp_path):
             return None
 
     monkeypatch.setattr(
-        "backend.app.services.simulation_service.OpenAIClientWrapper",
-        FakeStatusClient,
+        "backend.app.services.simulation_service.get_ai_client",
+        lambda _settings: FakeStatusClient(),
     )
     monkeypatch.setattr("backend.app.services.simulation_service.Thread", FakeThread)
     client = TestClient(app)

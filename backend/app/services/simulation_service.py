@@ -5,7 +5,8 @@ from threading import Thread
 from uuid import uuid4
 
 from backend.app.clients.langfuse_client import LangfuseTraceWrapper
-from backend.app.clients.openai_client import OpenAIDecisionError, OpenAIClientWrapper
+from backend.app.clients.ai_client_factory import get_ai_client, get_ai_decision_error_types
+from backend.app.clients.openai_client import OpenAIClientWrapper
 from backend.app.core.config import get_settings
 from backend.app.models.run import (
     Agent,
@@ -241,12 +242,14 @@ def _execute_simulation_run(
         },
         status_message="Simulation run started.",
     ) as run_trace:
-        openai_wrapper = OpenAIClientWrapper(settings)
-        openai_configured, openai_available, openai_message = openai_wrapper.get_status()
+        ai_wrapper = get_ai_client(settings)
+        openai_configured, openai_available, openai_message = ai_wrapper.get_status()
         trace_id = langfuse_wrapper.get_current_trace_id()
         trace_url = langfuse_wrapper.get_trace_url(trace_id=trace_id)
         if not openai_configured or not openai_available:
             raise SimulationExecutionError(openai_message)
+
+        openai_wrapper = ai_wrapper
 
         supplier = Agent(
             id="supplier",
@@ -635,11 +638,11 @@ def launch_seeded_simulations(
 
 
 def launch_configured_simulation(config: SimulationRunConfig) -> RunRecord:
-    openai_configured, openai_available, openai_message = OpenAIClientWrapper(
+    ai_configured, ai_available, ai_message = get_ai_client(
         get_settings()
     ).get_status()
-    if not openai_configured or not openai_available:
-        raise SimulationExecutionError(openai_message)
+    if not ai_configured or not ai_available:
+        raise SimulationExecutionError(ai_message)
 
     created_at = utc_now()
     run_id = f"run-{uuid4().hex[:10]}"
@@ -654,11 +657,11 @@ def launch_configured_simulation(config: SimulationRunConfig) -> RunRecord:
 
 
 def launch_true_branch_simulation(source_run: RunRecord, config: SimulationRunConfig) -> RunRecord:
-    openai_configured, openai_available, openai_message = OpenAIClientWrapper(
+    ai_configured, ai_available, ai_message = get_ai_client(
         get_settings()
     ).get_status()
-    if not openai_configured or not openai_available:
-        raise SimulationExecutionError(openai_message)
+    if not ai_configured or not ai_available:
+        raise SimulationExecutionError(ai_message)
     if config.branch_pivot_step_index is None:
         raise SimulationExecutionError("Branch pivot step is required.")
 
@@ -896,7 +899,7 @@ def _execute_true_branch_run(
         f"Supplier-to-manufacturer pricing sets the manufacturer cost basis before the retailer negotiation."
     )
     scenario_context = _build_scenario_context(config)
-    openai_wrapper = OpenAIClientWrapper(settings)
+    openai_wrapper = get_ai_client(settings)
     langfuse_wrapper = LangfuseTraceWrapper(settings)
     product_context = ProductMarketContext(
         product_name=config.product_name,
@@ -2382,7 +2385,7 @@ def _decide_agent_action(
                 },
                 langfuse_wrapper=langfuse_wrapper,
             )
-        except OpenAIDecisionError as exc:
+        except tuple(get_ai_decision_error_types()) as exc:
             decision_span.update(
                 output={"error": str(exc)},
                 status_message=str(exc),

@@ -43,6 +43,9 @@ def _normalize_env_value(value: str) -> str:
 class Settings(BaseModel):
     openai_api_key: str | None
     openai_model: str
+    ollama_base_url: str
+    ollama_model: str
+    ai_provider: str
     langfuse_public_key: str | None
     langfuse_secret_key: str | None
     langfuse_host: str
@@ -56,6 +59,10 @@ class Settings(BaseModel):
         return bool(self.openai_api_key)
 
     @property
+    def ollama_enabled(self) -> bool:
+        return bool(self.ollama_base_url)
+
+    @property
     def langfuse_enabled(self) -> bool:
         return bool(self.langfuse_public_key and self.langfuse_secret_key)
 
@@ -66,7 +73,10 @@ def get_settings() -> Settings:
 
     return Settings(
         openai_api_key=os.getenv("OPENAI_API_KEY"),
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-5.4"),
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o"),
+        ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        ollama_model=os.getenv("OLLAMA_MODEL", "llama3.2"),
+        ai_provider=os.getenv("AI_PROVIDER", "ollama"),
         langfuse_public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
         langfuse_secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
         langfuse_host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
